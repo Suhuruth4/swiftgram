@@ -111,6 +111,51 @@ http://localhost:8080/health
 - MinIO: `localhost:9000` / console `:9001`
 - Mailpit: `localhost:8025`
 
+## Production architecture
+
+Cove is deployed as two parts:
+
+- **Web app:** Cloudflare Pages at `cove.greatshiftai.com`
+- **Backend API:** Dockerized Spring Boot service at `api.cove.greatshiftai.com`
+
+The web app calls `https://api.cove.greatshiftai.com`. Cloudflare Pages cannot run the Spring Boot backend, Postgres, Redis, or MinIO. Those services must run on a Docker host such as a VPS, cloud VM, or container platform.
+
+## Docker backend release
+
+1) Copy the production env template:
+```
+cp server/.env.production.example server/.env
+```
+
+2) Edit `server/.env` and set real secrets:
+- `APP_JWT_SECRET`
+- `POSTGRES_PASSWORD`
+- `MINIO_ROOT_PASSWORD`
+- SMTP settings for email OTP
+- Twilio settings if phone OTP should send real SMS
+
+3) Start the backend stack:
+```
+docker compose -f infra/docker-compose.prod.yml up -d --build
+```
+
+4) Point Cloudflare DNS for the backend to the Docker host:
+```
+api.cove.greatshiftai.com -> your Docker host
+```
+
+The compose file exposes the API on host port `8080`. Put Cloudflare, Nginx, Caddy, or another reverse proxy in front of it for HTTPS.
+
+## OTP flow
+
+- `POST /auth/request-otp` creates a numeric OTP and stores it in Redis with a short TTL.
+- Email OTP uses the configured SMTP provider.
+- Phone OTP uses Twilio only when `APP_SMS_PROVIDER=twilio`; otherwise phone OTP is logged in mock mode.
+- `POST /auth/verify-otp` validates the code, creates or updates the user, then returns a JWT.
+- Redis must be running because OTP codes are stored there.
+
+For production, do not use mock OTP providers except during private testing.
+
 ## Cloudflare Pages release
 
 Cove stays in this separate repository and can be launched as a GreatShift product on Cloudflare Pages.

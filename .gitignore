@@ -15,3 +15,9 @@ client/.cache/
 
 # OS
 .DS_Store
+
+.env
+server/.env
+client/.env
+client/.env.local
+client/.env.production
