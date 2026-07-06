@@ -110,3 +110,23 @@ http://localhost:8080/health
 - NATS: `localhost:4222`
 - MinIO: `localhost:9000` / console `:9001`
 - Mailpit: `localhost:8025`
+
+## Cloudflare Pages release
+
+Cove stays in this separate repository and can be launched as a GreatShift product on Cloudflare Pages.
+
+Recommended Cloudflare setup:
+- Project name: `cove`
+- Production domain: `cove.greatshiftai.com`
+- Root directory: `client`
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Production environment variable: `VITE_API_URL=https://api.cove.greatshiftai.com`
+
+Deploy from the client folder with Wrangler when Cloudflare auth is configured:
+```
+cd client
+npm run deploy:cloudflare
+```
+
+The Spring Boot API is not a Cloudflare Pages app. Host it as a backend service and point `api.cove.greatshiftai.com` at that service through Cloudflare DNS/proxy.
